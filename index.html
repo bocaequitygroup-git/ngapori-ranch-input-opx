@@ -1,0 +1,1838 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
+<title>SeasonAware — Ranch Operations</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ===================== Tokens ===================== */
+:root{
+  --ink:#23211E;
+  --paper:#F1ECDC;
+  --paper-2:#E7DFC5;
+  --paper-3:#DED4B4;
+  --rust:#8B3A2E;
+  --rust-dark:#6E2C22;
+  --moss:#566B3D;
+  --moss-dark:#3F4E2C;
+  --amber:#B9862B;
+  --amber-dark:#8F6720;
+  --line:#D2C7A4;
+  --chrome:#23211E;
+  --chrome-2:#34312B;
+  --chrome-text:#F1ECDC;
+  --chrome-text-dim:#B7AF98;
+  --radius:10px;
+  --shadow:0 3px 10px rgba(35,33,30,.16);
+  --font-display:'Barlow Condensed',sans-serif;
+  --font-body:'Inter',sans-serif;
+  --font-mono:'IBM Plex Mono',monospace;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;height:100%;}
+body{
+  font-family:var(--font-body);
+  background:var(--paper);
+  color:var(--ink);
+  -webkit-tap-highlight-color:transparent;
+}
+button{font-family:inherit;cursor:pointer;}
+input,select,textarea{font-family:inherit;}
+h1,h2,h3,.disp{font-family:var(--font-display);text-transform:uppercase;letter-spacing:.03em;}
+
+/* ===================== Layout shell ===================== */
+#app{min-height:100vh;display:flex;flex-direction:column;}
+
+.chrome-bar{
+  background:var(--chrome);color:var(--chrome-text);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:12px 16px;position:sticky;top:0;z-index:30;
+  box-shadow:var(--shadow);
+}
+.brand{display:flex;align-items:center;gap:8px;}
+.brand-mark{
+  width:30px;height:30px;border-radius:50%;
+  border:2px solid var(--rust);display:flex;align-items:center;justify-content:center;
+  font-family:var(--font-display);font-weight:700;font-size:14px;color:var(--rust);
+}
+.brand-name{font-family:var(--font-display);font-weight:700;font-size:19px;letter-spacing:.05em;}
+.brand-sub{font-family:var(--font-mono);font-size:10px;color:var(--chrome-text-dim);letter-spacing:.08em;display:block;}
+
+.user-chip{display:flex;align-items:center;gap:8px;}
+.avatar{
+  width:32px;height:32px;border-radius:50%;background:var(--rust);color:#fff;
+  display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;
+  font-family:var(--font-display);
+}
+.user-meta{display:flex;flex-direction:column;line-height:1.2;}
+.user-name{font-size:13px;font-weight:600;}
+.user-role{font-size:10px;color:var(--chrome-text-dim);font-family:var(--font-mono);text-transform:uppercase;}
+.logout-btn{
+  background:none;border:1px solid var(--chrome-2);color:var(--chrome-text-dim);
+  border-radius:8px;padding:6px 9px;font-size:11px;margin-left:6px;
+}
+.logout-btn:hover{color:#fff;border-color:var(--chrome-text-dim);}
+
+.view-container{flex:1;padding:14px 14px 90px;max-width:640px;width:100%;margin:0 auto;}
+
+.bottom-nav{
+  position:fixed;bottom:0;left:0;right:0;background:var(--chrome);
+  display:flex;z-index:30;box-shadow:0 -2px 10px rgba(0,0,0,.2);
+  padding-bottom:env(safe-area-inset-bottom);
+}
+.nav-btn{
+  flex:1;background:none;border:none;color:var(--chrome-text-dim);
+  padding:10px 4px 8px;display:flex;flex-direction:column;align-items:center;gap:3px;
+  font-size:10.5px;font-family:var(--font-mono);letter-spacing:.04em;text-transform:uppercase;
+  border-top:2px solid transparent;
+}
+.nav-btn .ic{font-size:18px;line-height:1;}
+.nav-btn.active{color:var(--paper);border-top-color:var(--rust);}
+
+/* ===================== Login ===================== */
+.login-wrap{
+  min-height:100vh;background:var(--chrome);display:flex;align-items:center;justify-content:center;padding:24px;
+}
+.login-card{
+  background:var(--paper);border-radius:14px;padding:30px 26px;width:100%;max-width:380px;box-shadow:0 10px 40px rgba(0,0,0,.35);
+}
+.login-brand{text-align:center;margin-bottom:22px;}
+.login-brand .brand-mark{width:52px;height:52px;font-size:22px;margin:0 auto 10px;}
+.login-brand h1{font-size:28px;margin:0;letter-spacing:.04em;}
+.login-brand p{font-family:var(--font-mono);font-size:11px;color:var(--rust-dark);margin:4px 0 0;letter-spacing:.08em;text-transform:uppercase;}
+
+.field{margin-bottom:16px;}
+.field label{display:block;font-family:var(--font-mono);font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--rust-dark);margin-bottom:6px;}
+.field input,.field select,.field textarea{
+  width:100%;padding:11px 12px;border:1.5px solid var(--line);border-radius:8px;
+  background:#fff;font-size:15px;color:var(--ink);
+}
+.field textarea{resize:vertical;min-height:64px;}
+.field input:focus,.field select:focus,.field textarea:focus{outline:2px solid var(--rust);outline-offset:1px;}
+
+.pin-display{display:flex;gap:10px;justify-content:center;margin-bottom:14px;}
+.pin-dot{width:16px;height:16px;border-radius:50%;border:2px solid var(--rust);background:transparent;}
+.pin-dot.filled{background:var(--rust);}
+.pin-pad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+.pin-key{
+  padding:16px 0;border-radius:10px;border:1.5px solid var(--line);background:#fff;
+  font-family:var(--font-display);font-size:22px;font-weight:600;color:var(--ink);
+}
+.pin-key:active{background:var(--paper-2);}
+.pin-key.wide{grid-column:span 1;font-family:var(--font-mono);font-size:12px;text-transform:uppercase;color:var(--rust-dark);}
+
+.btn{
+  border:none;border-radius:9px;padding:13px 16px;font-weight:600;font-size:14.5px;
+  display:inline-flex;align-items:center;justify-content:center;gap:6px;width:100%;
+}
+.btn-primary{background:var(--rust);color:#fff;}
+.btn-primary:active{background:var(--rust-dark);}
+.btn-secondary{background:#fff;color:var(--ink);border:1.5px solid var(--line);}
+.btn-success{background:var(--moss);color:#fff;}
+.btn-ghost{background:none;color:var(--rust-dark);text-decoration:underline;font-weight:500;padding:8px;}
+.btn:disabled{opacity:.5;}
+
+.login-error{
+  background:#F5DEDA;color:var(--rust-dark);border:1px solid var(--rust);border-radius:8px;
+  padding:9px 11px;font-size:13px;margin-bottom:14px;text-align:center;
+}
+
+/* ===================== Date bar ===================== */
+.date-bar{
+  display:flex;align-items:center;justify-content:space-between;gap:8px;
+  background:var(--paper-2);border:1.5px solid var(--line);border-radius:10px;
+  padding:8px 10px;margin-bottom:16px;position:sticky;top:8px;z-index:10;
+}
+.date-bar .arrow{background:none;border:none;font-size:18px;color:var(--rust-dark);padding:6px 10px;font-weight:700;}
+.date-bar .date-label{font-family:var(--font-mono);font-size:13px;text-align:center;flex:1;}
+.date-bar .date-label b{display:block;font-family:var(--font-display);font-size:16px;text-transform:uppercase;letter-spacing:.03em;}
+.today-jump{font-family:var(--font-mono);font-size:10px;background:none;border:1px solid var(--rust);color:var(--rust-dark);border-radius:6px;padding:5px 8px;text-transform:uppercase;}
+
+/* ===================== Task tickets ===================== */
+.block-group{margin-bottom:22px;}
+.block-title{
+  display:flex;align-items:center;gap:10px;margin:0 0 10px;font-size:15px;color:var(--rust-dark);
+}
+.block-title::after{content:'';flex:1;border-top:1.5px dashed var(--line);}
+
+.task-ticket{
+  position:relative;background:#fff;border-radius:var(--radius);margin-bottom:10px;
+  box-shadow:var(--shadow);overflow:hidden;display:flex;
+}
+.ticket-stub{
+  width:14px;flex-shrink:0;background-image:radial-gradient(circle,var(--paper) 2.5px,transparent 2.6px);
+  background-size:14px 14px;background-position:center;border-right:1.5px dashed var(--line);
+}
+.ticket-body{padding:12px 14px;flex:1;min-width:0;}
+.ticket-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;}
+.ticket-task{font-weight:600;font-size:15px;line-height:1.3;}
+.ticket-meta{display:flex;flex-wrap:wrap;gap:6px;margin-top:7px;align-items:center;}
+.chip{
+  font-family:var(--font-mono);font-size:10.5px;padding:3px 8px;border-radius:20px;
+  background:var(--paper-2);color:var(--ink);white-space:nowrap;
+}
+.chip.time{background:var(--paper-3);}
+.chip.log-health{background:#F2DFDB;color:var(--rust-dark);}
+.chip.log-water{background:#DCE6E9;color:#2C5766;}
+.chip.log-movement{background:#E6EAD9;color:var(--moss-dark);}
+.chip.role{background:var(--chrome);color:var(--chrome-text);}
+
+.ticket-action{margin-top:10px;}
+.ticket-action .btn{padding:9px 12px;font-size:13px;}
+
+.stamp{
+  position:absolute;top:10px;right:12px;transform:rotate(-9deg);
+  border:2px solid var(--moss);color:var(--moss-dark);border-radius:6px;
+  padding:2px 8px;font-family:var(--font-display);font-weight:700;font-size:12px;
+  letter-spacing:.08em;background:rgba(86,107,61,.06);
+}
+.stamp.pending{border-color:var(--amber);color:var(--amber-dark);background:rgba(185,134,43,.08);}
+
+/* ===================== Modal ===================== */
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(35,33,30,.55);z-index:50;
+  display:flex;align-items:flex-end;justify-content:center;
+}
+.modal-sheet{
+  background:var(--paper);width:100%;max-width:640px;border-radius:16px 16px 0 0;
+  max-height:88vh;overflow-y:auto;padding:18px 18px calc(20px + env(safe-area-inset-bottom));
+  animation:slideup .18s ease-out;
+}
+@keyframes slideup{from{transform:translateY(30px);opacity:0;}to{transform:translateY(0);opacity:1;}}
+.modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;}
+.modal-head h2{font-size:20px;margin:0;}
+.modal-close{background:none;border:none;font-size:22px;color:var(--rust-dark);line-height:1;padding:4px 8px;}
+.modal-actions{display:flex;gap:10px;margin-top:6px;}
+
+/* ===================== Team / summary view ===================== */
+.section-title{font-size:19px;margin:2px 0 12px;}
+.stat-row{display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap;}
+.stat-card{
+  flex:1;min-width:100px;background:#fff;border-radius:10px;padding:12px;box-shadow:var(--shadow);text-align:center;
+}
+.stat-card .num{font-family:var(--font-display);font-size:26px;font-weight:700;}
+.stat-card .lbl{font-family:var(--font-mono);font-size:10px;text-transform:uppercase;color:var(--rust-dark);letter-spacing:.05em;}
+
+.summary-row{
+  background:#fff;border-radius:10px;padding:11px 13px;margin-bottom:8px;box-shadow:var(--shadow);
+  display:flex;justify-content:space-between;align-items:center;gap:10px;
+}
+.summary-date{font-family:var(--font-mono);font-size:13px;}
+.summary-date b{display:block;font-family:var(--font-display);font-size:15px;}
+.pill{font-family:var(--font-mono);font-size:10.5px;padding:3px 9px;border-radius:20px;text-transform:uppercase;}
+.pill.complete{background:#E6EAD9;color:var(--moss-dark);}
+.pill.incomplete{background:#F2DFDB;color:var(--rust-dark);}
+.pill.zero{background:var(--paper-2);color:var(--ink);}
+
+.entry-row{background:#fff;border-radius:10px;padding:11px 13px;margin-bottom:8px;box-shadow:var(--shadow);}
+.entry-top{display:flex;justify-content:space-between;gap:8px;align-items:baseline;}
+.entry-task{font-weight:600;font-size:14px;}
+.entry-date{font-family:var(--font-mono);font-size:11px;color:var(--rust-dark);}
+.entry-detail{font-size:13px;color:#4A473F;margin-top:5px;line-height:1.4;}
+.entry-by{font-family:var(--font-mono);font-size:10.5px;color:var(--moss-dark);margin-top:6px;}
+
+.filter-row{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;}
+.filter-chip{
+  font-family:var(--font-mono);font-size:11px;padding:6px 12px;border-radius:20px;
+  border:1.5px solid var(--line);background:#fff;color:var(--ink);text-transform:uppercase;
+}
+.filter-chip.active{background:var(--rust);border-color:var(--rust);color:#fff;}
+
+.empty-state{text-align:center;padding:40px 16px;color:#6B6759;}
+.empty-state .ic{font-size:34px;margin-bottom:8px;display:block;}
+.loading-state{text-align:center;padding:60px 16px;font-family:var(--font-mono);font-size:13px;color:var(--rust-dark);}
+
+.toast{
+  position:fixed;bottom:76px;left:50%;transform:translateX(-50%);
+  background:var(--ink);color:var(--paper);padding:11px 18px;border-radius:30px;
+  font-size:13px;box-shadow:0 4px 14px rgba(0,0,0,.3);z-index:60;
+  display:flex;align-items:center;gap:8px;max-width:90%;
+}
+.toast.success{background:var(--moss-dark);}
+.toast.warn{background:var(--amber-dark);}
+.toast.error{background:var(--rust-dark);}
+
+.sync-banner{
+  background:var(--amber);color:#3A2A08;font-family:var(--font-mono);font-size:11.5px;
+  padding:8px 12px;border-radius:8px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;gap:8px;
+}
+.sync-banner button{background:var(--ink);color:#fff;border:none;border-radius:6px;padding:5px 10px;font-size:11px;font-family:var(--font-mono);}
+
+@media (min-width:520px){
+  .pin-pad{max-width:280px;margin:0 auto;}
+}
+
+/* ===================== Scan Location ===================== */
+.scan-frame{
+  position:relative;background:#000;border-radius:14px;overflow:hidden;
+  aspect-ratio:1/1;max-width:360px;margin:0 auto 16px;box-shadow:var(--shadow);
+}
+.scan-frame video{width:100%;height:100%;object-fit:cover;display:block;}
+.scan-reticle{
+  position:absolute;inset:14%;border:3px solid var(--amber);border-radius:14px;
+  box-shadow:0 0 0 999px rgba(0,0,0,.35);pointer-events:none;
+}
+.scan-hint{text-align:center;font-family:var(--font-mono);font-size:12px;color:var(--rust-dark);margin-bottom:16px;}
+.scan-divider{display:flex;align-items:center;gap:10px;margin:18px 0;color:#8B8570;font-family:var(--font-mono);font-size:11px;text-transform:uppercase;}
+.scan-divider::before,.scan-divider::after{content:'';flex:1;border-top:1px dashed var(--line);}
+.manual-code-row{display:flex;gap:8px;}
+.manual-code-row input{flex:1;padding:12px;border-radius:9px;border:1.5px solid var(--line);font-family:var(--font-mono);font-size:14px;}
+.manual-code-row button{width:auto;padding:12px 16px;}
+
+/* ===================== Location dashboard ===================== */
+.location-header{background:var(--chrome);color:var(--chrome-text);border-radius:12px;padding:16px;margin-bottom:14px;}
+.location-header .loc-name{font-family:var(--font-display);font-size:22px;text-transform:uppercase;letter-spacing:.03em;}
+.location-header .loc-sub{font-family:var(--font-mono);font-size:11px;color:var(--chrome-text-dim);margin-top:2px;}
+.issue-card{
+  background:#F5DEDA;border:1px solid var(--rust);border-radius:10px;padding:10px 13px;margin-bottom:8px;
+  font-size:13px;color:var(--rust-dark);
+}
+.issue-card b{display:block;font-family:var(--font-mono);font-size:10px;text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px;}
+.task-card{
+  background:#fff;border-radius:10px;padding:13px 14px;margin-bottom:10px;box-shadow:var(--shadow);
+  display:flex;justify-content:space-between;align-items:center;gap:12px;
+}
+.task-card .tc-name{font-weight:600;font-size:14.5px;}
+.task-card .tc-btn{width:auto;padding:9px 14px;font-size:13px;white-space:nowrap;}
+
+.session-bar{
+  background:var(--moss);color:#fff;border-radius:12px;padding:13px 14px;margin-bottom:16px;
+  display:flex;justify-content:space-between;align-items:center;gap:10px;
+}
+.session-bar .sb-task{font-weight:600;font-size:14.5px;}
+.session-bar .sb-time{font-family:var(--font-mono);font-size:11px;color:#DCE6D2;margin-top:2px;}
+.session-bar .btn{width:auto;padding:9px 14px;font-size:13px;}
+
+/* ===================== Floating break button ===================== */
+.break-fab{
+  position:fixed;right:14px;bottom:76px;z-index:40;
+  background:var(--amber);color:#3A2A08;border:none;border-radius:30px;
+  padding:12px 16px;font-family:var(--font-mono);font-size:12px;font-weight:600;
+  text-transform:uppercase;letter-spacing:.04em;box-shadow:0 4px 14px rgba(0,0,0,.3);
+  display:flex;align-items:center;gap:7px;
+}
+.break-fab.on-break{background:var(--rust);color:#fff;}
+.break-choice-sheet{display:flex;flex-direction:column;gap:10px;}
+.break-choice-sheet .btn{padding:14px;}
+
+/* ===================== Live status board (Team view) ===================== */
+.live-row{
+  background:#fff;border-radius:10px;padding:11px 13px;margin-bottom:8px;box-shadow:var(--shadow);
+  display:flex;justify-content:space-between;align-items:center;gap:10px;
+}
+.live-row .lr-name{font-weight:600;font-size:14px;}
+.live-row .lr-detail{font-family:var(--font-mono);font-size:11px;color:#6B6759;margin-top:2px;}
+.live-pill{font-family:var(--font-mono);font-size:10px;padding:3px 9px;border-radius:20px;text-transform:uppercase;white-space:nowrap;}
+.live-pill.st-idle{background:var(--paper-2);color:var(--ink);}
+.live-pill.st-present{background:#DCE6E9;color:#2C5766;}
+.live-pill.st-working{background:#E6EAD9;color:var(--moss-dark);}
+.live-pill.st-break{background:#F5E5C8;color:#8F6720;}
+.live-pill.st-available{background:#E6EAD9;color:var(--moss-dark);}
+
+/* ===================== Variance + Alerts (Team view) ===================== */
+.variance-row{background:#fff;border-radius:10px;padding:11px 13px;margin-bottom:8px;box-shadow:var(--shadow);}
+.variance-top{display:flex;justify-content:space-between;align-items:center;gap:8px;}
+.variance-task{font-weight:600;font-size:13.5px;}
+.variance-times{font-family:var(--font-mono);font-size:11px;color:#6B6759;margin-top:4px;display:flex;flex-wrap:wrap;gap:10px;}
+.var-chip{font-family:var(--font-mono);font-size:10.5px;padding:3px 9px;border-radius:20px;text-transform:uppercase;white-space:nowrap;}
+.var-chip.late{background:#F2DFDB;color:var(--rust-dark);}
+.var-chip.early{background:#E6EAD9;color:var(--moss-dark);}
+.var-chip.ontime{background:var(--paper-2);color:var(--ink);}
+.var-chip.pending{background:var(--paper-2);color:#6B6759;}
+
+.alert-row{background:#F5DEDA;border:1px solid var(--rust);border-radius:10px;padding:10px 12px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;gap:10px;}
+.alert-row .alert-main{font-size:13px;}
+.alert-row .alert-main b{display:block;font-size:13.5px;}
+.alert-row .alert-meta{font-family:var(--font-mono);font-size:10.5px;color:var(--rust-dark);margin-top:2px;}
+.ack-btn{background:none;border:1px solid var(--rust);color:var(--rust-dark);border-radius:7px;padding:6px 10px;font-size:11px;white-space:nowrap;}
+.ack-btn:active{background:var(--rust);color:#fff;}
+
+/* ===================== Projects / Work Orders ===================== */
+.directive-card{background:#fff;border-radius:10px;padding:13px 14px;margin-bottom:10px;box-shadow:var(--shadow);border-left:4px solid var(--amber);}
+.directive-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;}
+.directive-title{font-weight:600;font-size:14.5px;}
+.directive-meta{font-family:var(--font-mono);font-size:10.5px;color:#6B6759;margin-top:4px;}
+.directive-why{font-size:12.5px;color:#4A473F;margin-top:7px;line-height:1.4;font-style:italic;}
+.priority-badge{font-family:var(--font-mono);font-size:9.5px;padding:3px 8px;border-radius:20px;text-transform:uppercase;white-space:nowrap;font-weight:600;}
+.priority-badge.p-critical{background:var(--rust);color:#fff;}
+.priority-badge.p-high{background:#F2DFDB;color:var(--rust-dark);}
+.priority-badge.p-normal{background:var(--paper-3);color:var(--ink);}
+.priority-badge.p-low{background:var(--paper-2);color:#6B6759;}
+
+.project-card{background:#fff;border-radius:10px;padding:13px 14px;margin-bottom:10px;box-shadow:var(--shadow);}
+.project-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;}
+.project-name{font-weight:600;font-size:15px;}
+.project-meta{font-family:var(--font-mono);font-size:10.5px;color:#6B6759;margin-top:3px;}
+.progress-track{background:var(--paper-2);border-radius:20px;height:8px;margin-top:9px;overflow:hidden;}
+.progress-fill{background:var(--moss);height:100%;border-radius:20px;}
+.progress-label{font-family:var(--font-mono);font-size:10px;color:#6B6759;margin-top:4px;display:flex;justify-content:space-between;}
+.wo-sub-list{margin-top:10px;padding-top:8px;border-top:1px dashed var(--line);}
+
+.wo-card{
+  background:#fff;border-radius:10px;padding:12px 13px;margin-bottom:9px;box-shadow:var(--shadow);
+}
+.wo-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;}
+.wo-desc{font-weight:600;font-size:13.5px;line-height:1.3;}
+.wo-meta{font-family:var(--font-mono);font-size:10.5px;color:#6B6759;margin-top:5px;display:flex;flex-wrap:wrap;gap:8px;}
+.wo-actions{margin-top:10px;display:flex;gap:8px;}
+.wo-actions .btn{width:auto;padding:8px 13px;font-size:12.5px;}
+.status-pill{font-family:var(--font-mono);font-size:10px;padding:3px 9px;border-radius:20px;text-transform:uppercase;white-space:nowrap;}
+.status-pill.st-pending{background:var(--paper-2);color:var(--ink);}
+.status-pill.st-inprogress{background:#DCE6E9;color:#2C5766;}
+.status-pill.st-completed{background:#E6EAD9;color:var(--moss-dark);}
+.status-pill.st-blocked{background:#F2DFDB;color:var(--rust-dark);}
+.wo-photo-link{font-family:var(--font-mono);font-size:11px;margin-top:6px;display:block;}
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+<script>
+/* =========================================================================
+   CONFIG — paste your deployed Apps Script Web App URL below (ends in /exec)
+   ========================================================================= */
+const CONFIG = {
+  SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbyePKluC5NqmfcAujsa8T6wU8F5GOTC2mk8mVL-2eoXjsVrVQrMdNe4-8Z4SSyJawA5/exec',
+  RANCH_NAME: 'SeasonAware Ranch',
+  SESSION_HOURS: 16
+};
+
+/* =========================================================================
+   State
+   ========================================================================= */
+const STATE = {
+  user: null,
+  data: null,
+  view: 'today',
+  selectedDate: todayISO(),
+  loggedIndex: {},
+  pendingQueue: [],
+  modal: null,
+  loading: true,
+  loadError: null,
+  historyFilter: 'ALL',
+  // -- location scanning / live session --
+  currentLocation: null,   // {locationId, locationName, tasks:[{task,logSheet}], openIssues:[{issue,date}]}
+  myStatus: null,          // this worker's row from WORKER_LIVE_STATUS
+  scanError: null,
+  scanning: false,
+  breakChoiceOpen: false,
+  // -- planned vs. actual variance (Team view) --
+  variance: null,        // {date, rows[]} for STATE.varianceDate, or null if not loaded yet
+  varianceDate: todayISO(),
+  varianceLoading: false,
+  // -- Projects view (Directive -> Project -> Work Order pipeline) --
+  projectsFilter: 'OPEN'   // 'OPEN' | 'ALL' | 'COMPLETED' — applies to the work-order list
+};
+
+const BREAK_TYPES = { REST: '15-Min Rest', MEAL: 'Meal / Lunch' };
+
+const LOG_META = {
+  HEALTH_LOG: { badge: 'log-health', label: 'Health' },
+  WATER_LOG: { badge: 'log-water', label: 'Water' },
+  MOVEMENT_LOG: { badge: 'log-movement', label: 'Movement' }
+};
+
+const LOG_CONFIGS = {
+  HEALTH_LOG: {
+    tab: 'HEALTH_LOG',
+    title: 'Health Log Entry',
+    fields: [
+      { key: 'Date', type: 'date' },
+      { key: 'Time', type: 'time' },
+      { key: 'Task', type: 'text' },
+      { key: 'IssueType', type: 'select', options: ['Daily Herd Check','Injury','Illness','Lameness','Mineral / Feeding','Pregnancy Check','Weaning','Body Condition Score','Vaccination','Other'] },
+      { key: 'Severity', type: 'select', options: ['Normal','Monitor','Urgent'] },
+      { key: 'ActionTaken', type: 'textarea', label: 'Action Taken' },
+      { key: 'FollowUp', type: 'text', label: 'Follow-Up' },
+      { key: 'Verified?', type: 'select', options: ['Yes','No'], label: 'Verified?' },
+      { key: 'Photo', type: 'photo', label: 'Photo (optional)' }
+    ]
+  },
+  WATER_LOG: {
+    tab: 'WATER_LOG',
+    title: 'Water Log Entry',
+    fields: [
+      { key: 'Date', type: 'date' },
+      { key: 'Time', type: 'time' },
+      { key: 'Task', type: 'text' },
+      { key: 'System', type: 'select', options: ['Pasture Water System','Trough','Well Pump','Ice / Break','Water Infrastructure','Other'] },
+      { key: 'Status', type: 'select', options: ['Operational','Needs Repair','Out of Service'] },
+      { key: 'IssueFound', type: 'text', label: 'Issue Found' },
+      { key: 'ActionTaken', type: 'textarea', label: 'Action Taken' },
+      { key: 'Photo', type: 'photo', label: 'Photo (optional)' }
+    ]
+  },
+  MOVEMENT_LOG: {
+    tab: 'MOVEMENT_LOG',
+    title: 'Movement Log Entry',
+    fields: [
+      { key: 'Date', type: 'date' },
+      { key: 'Time', type: 'time' },
+      { key: 'Task', type: 'text' },
+      { key: 'From_Location', type: 'text', label: 'From Location' },
+      { key: 'To_Location', type: 'text', label: 'To Location' },
+      { key: 'MovementType', type: 'select', label: 'Movement Type', options: ['Rotation Move','Strip Grazing Move','Return to Paddock','Portable Infrastructure Move','Stockpile Pasture Move','Emergency Move','Infrastructure Check'] },
+      { key: 'Photo', type: 'photo', label: 'Photo (optional)' }
+    ]
+  }
+};
+
+/* =========================================================================
+   Directives -> Projects -> Work Orders pipeline
+   ========================================================================= */
+// LOOKUP_LISTS is a set of parallel dropdown columns (Project_Status,
+// Work_Order_Status, Project_Priority, Directive_Category, Directive_Status,
+// Worker_Status_Toggle) — pull one column's non-blank values in sheet order.
+function lookupOptions(column){
+  const rows = (STATE.data && STATE.data.lookups && STATE.data.lookups.rows) || [];
+  return rows.map(function(r){ return r[column]; }).filter(function(v){ return v!=null && v!==''; });
+}
+
+// WORK_ORDERS.Assigned_Worker is written "Full Name — Role" (e.g. "Mark R. —
+// Equipment Operator"), not a bare ROSTER name, so match on a normalized prefix.
+function normalizeWorkerRef(v){
+  return String(v||'').split('—')[0].split('-')[0].trim().toLowerCase();
+}
+function workOrderIsMine(wo){
+  const assigned = normalizeWorkerRef(wo['Assigned_Worker']);
+  const me = String(STATE.user.name||'').trim().toLowerCase();
+  if(!assigned || !me) return false;
+  return assigned === me || assigned.indexOf(me)===0 || me.indexOf(assigned)===0;
+}
+function myWorkOrders(){
+  const all = (STATE.data && STATE.data.workOrders && STATE.data.workOrders.rows) || [];
+  const isManager = STATE.user.role === 'Ranch Manager' || STATE.user.role === 'Founder';
+  return isManager ? all.slice() : all.filter(workOrderIsMine);
+}
+function projectById(id){
+  const rows = (STATE.data && STATE.data.projects && STATE.data.projects.rows) || [];
+  return rows.find(function(p){ return p['Project_ID']===id; }) || null;
+}
+function directiveById(id){
+  const rows = (STATE.data && STATE.data.directives && STATE.data.directives.rows) || [];
+  return rows.find(function(d){ return d['Directive_ID']===id; }) || null;
+}
+function workOrdersForProject(projectId){
+  const all = (STATE.data && STATE.data.workOrders && STATE.data.workOrders.rows) || [];
+  return all.filter(function(w){ return w['Project_ID']===projectId; });
+}
+
+/* =========================================================================
+   Utilities
+   ========================================================================= */
+function todayISO(){
+  const d = new Date();
+  const off = d.getTimezoneOffset();
+  const local = new Date(d.getTime() - off*60000);
+  return local.toISOString().slice(0,10);
+}
+function nowHHMM(){
+  const d = new Date();
+  return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+}
+function addDays(iso, n){
+  const d = new Date(iso + 'T00:00:00');
+  d.setDate(d.getDate()+n);
+  return d.toISOString().slice(0,10);
+}
+function fmtDateHuman(iso){
+  const d = new Date(iso + 'T00:00:00');
+  return d.toLocaleDateString(undefined, { weekday:'short', month:'short', day:'numeric' });
+}
+function initials(name){
+  return (name||'?').trim().split(/\s+/).map(function(w){return w[0];}).slice(0,2).join('').toUpperCase();
+}
+function esc(s){
+  return String(s==null?'':s).replace(/[&<>"']/g, function(c){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+  });
+}
+function el(html){
+  const t = document.createElement('template');
+  t.innerHTML = html.trim();
+  return t.content.firstElementChild;
+}
+
+/* =========================================================================
+   Session
+   ========================================================================= */
+function saveSession(user){
+  const expires = Date.now() + CONFIG.SESSION_HOURS*3600*1000;
+  localStorage.setItem('sa_session', JSON.stringify({ user: user, expires: expires }));
+}
+function loadSession(){
+  try{
+    const raw = localStorage.getItem('sa_session');
+    if(!raw) return null;
+    const parsed = JSON.parse(raw);
+    if(!parsed.expires || Date.now() > parsed.expires){
+      localStorage.removeItem('sa_session');
+      return null;
+    }
+    return parsed.user;
+  }catch(e){ return null; }
+}
+function clearSession(){
+  localStorage.removeItem('sa_session');
+}
+
+/* =========================================================================
+   API
+   ========================================================================= */
+function apiGet(action, params){
+  params = params || {};
+  const usp = new URLSearchParams(Object.assign({ action: action }, params));
+  return fetch(CONFIG.SCRIPT_URL + '?' + usp.toString()).then(function(r){ return r.json(); });
+}
+function apiPost(action, payload){
+  return fetch(CONFIG.SCRIPT_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // avoids CORS preflight to Apps Script
+    body: JSON.stringify(Object.assign({ action: action }, payload))
+  }).then(function(r){ return r.json(); });
+}
+
+/* =========================================================================
+   Boot
+   ========================================================================= */
+function boot(){
+  STATE.user = loadSession();
+  STATE.pendingQueue = JSON.parse(localStorage.getItem('sa_pending') || '[]');
+  render();
+  if(STATE.user){
+    loadData();
+  }
+}
+
+function loadData(){
+  STATE.loading = true; STATE.loadError = null; render();
+  apiGet('bootstrap').then(function(res){
+    if(!res.ok){ STATE.loadError = res.error || 'Could not load data.'; STATE.loading = false; render(); return; }
+    STATE.data = res.data;
+    buildLoggedIndex();
+    refreshMyStatus();
+    STATE.loading = false;
+    render();
+    syncPendingQueue();
+  }).catch(function(err){
+    STATE.loadError = 'Network error — check the SCRIPT_URL in CONFIG, and your connection.';
+    STATE.loading = false;
+    render();
+  });
+}
+
+function loadVariance(date){
+  STATE.varianceLoading = true;
+  STATE.varianceDate = date;
+  render();
+  apiGet('variance', { date: date }).then(function(res){
+    STATE.varianceLoading = false;
+    // Same flat-response shape as scanLocation — no "data" envelope.
+    if(res.ok){
+      STATE.variance = res;
+    } else {
+      STATE.variance = { date: date, rows: [] };
+    }
+    render();
+  }).catch(function(){
+    STATE.varianceLoading = false;
+    STATE.variance = { date: date, rows: [] };
+    render();
+  });
+}
+
+function acknowledgeAlert(alert){
+  apiPost('acknowledgeAlert', { date: alert['Date'], worker: alert['Worker'], task: alert['Task'] }).then(function(res){
+    if(res.ok){
+      showToast('Alert acknowledged.', 'success');
+      loadData();
+    } else {
+      showToast('Could not acknowledge — try again.', 'warn');
+    }
+  }).catch(function(){
+    showToast('Could not reach the sheet — try again.', 'warn');
+  });
+}
+
+function buildLoggedIndex(){
+  STATE.loggedIndex = {};
+  ['healthLog','waterLog','movementLog'].forEach(function(key){
+    const tab = { healthLog:'HEALTH_LOG', waterLog:'WATER_LOG', movementLog:'MOVEMENT_LOG' }[key];
+    (STATE.data[key].rows || []).forEach(function(r){
+      if(!r['Task']) return;
+      const k = r['Date'] + '|' + r['Task'];
+      if(!STATE.loggedIndex[k]) STATE.loggedIndex[k] = [];
+      STATE.loggedIndex[k].push(Object.assign({ _tab: tab }, r));
+    });
+  });
+  // fold in anything still queued locally (not yet synced)
+  STATE.pendingQueue.forEach(function(item){
+    const k = item.row['Date'] + '|' + item.row['Task'];
+    if(!STATE.loggedIndex[k]) STATE.loggedIndex[k] = [];
+    STATE.loggedIndex[k].push(Object.assign({ _tab: item.tab, _pending: true }, item.row));
+  });
+}
+
+function refreshMyStatus(){
+  if(!STATE.data || !STATE.data.liveStatus || !STATE.user) return;
+  const rows = STATE.data.liveStatus.rows || [];
+  STATE.myStatus = rows.find(function(r){ return r['Worker_Name'] === STATE.user.name; }) || null;
+  // Keep the location dashboard's task list in sync if we're mid-session and
+  // reload picked up a status change from elsewhere (e.g. another device).
+  if(STATE.myStatus && STATE.myStatus['Current_State'] === 'Idle'){
+    STATE.currentLocation = null;
+  }
+}
+
+/* =========================================================================
+   Location scanning (QR) + Location Dashboard + task sessions
+   ========================================================================= */
+let scanStream = null;
+let scanRAF = null;
+let scanCameraDenied = false; // sticky for this Scan-view session; prevents auto-retries from
+                               // stomping a real error (or a silent success) with a stale
+                               // "permission denied" message once we already know it's denied
+
+function stopScanCamera(){
+  if(scanRAF) cancelAnimationFrame(scanRAF);
+  scanRAF = null;
+  if(scanStream){ scanStream.getTracks().forEach(function(t){ t.stop(); }); scanStream = null; }
+}
+
+function renderScan(){
+  STATE.scanError = null;
+  scanCameraDenied = false; // fresh view — worth trying the camera again (e.g. they just
+                             // granted permission in browser settings)
+  let html =
+    '<h2 class="section-title">Scan Location</h2>' +
+    '<div class="scan-hint">Point the camera at the QR code posted at the pasture, trough, or barn.</div>' +
+    '<div class="scan-frame"><video id="scanVideo" playsinline muted></video><div class="scan-reticle"></div></div>' +
+    '<canvas id="scanCanvas" style="display:none;"></canvas>' +
+    '<div id="scanErrorBox"></div>' +
+    '<div class="scan-divider">or enter it manually</div>' +
+    '<div class="manual-code-row">' +
+      '<input id="manualCode" type="text" placeholder="e.g. SA-LOC-01" autocapitalize="characters">' +
+      '<button class="btn btn-secondary" id="manualCodeBtn">Go</button>' +
+    '</div>';
+  renderShell(html);
+
+  document.getElementById('manualCodeBtn').addEventListener('click', function(){
+    const v = document.getElementById('manualCode').value.trim();
+    if(v) submitScannedCode(v);
+  });
+  document.getElementById('manualCode').addEventListener('keydown', function(e){
+    if(e.key === 'Enter'){ const v = e.target.value.trim(); if(v) submitScannedCode(v); }
+  });
+
+  startScanCamera();
+}
+
+function startScanCamera(){
+  if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+    showScanError('Camera not available on this device — use manual entry below.');
+    return;
+  }
+  navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } }).then(function(stream){
+    scanStream = stream;
+    const video = document.getElementById('scanVideo');
+    if(!video){ stopScanCamera(); return; } // view changed before permission resolved
+    video.srcObject = stream;
+    video.play();
+    STATE.scanning = true;
+    const canvas = document.getElementById('scanCanvas');
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    function tick(){
+      if(!STATE.scanning) return;
+      if(video.readyState === video.HAVE_ENOUGH_DATA){
+        canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const code = window.jsQR ? jsQR(img.data, img.width, img.height) : null;
+        if(code && code.data){
+          STATE.scanning = false;
+          stopScanCamera();
+          submitScannedCode(code.data);
+          return;
+        }
+      }
+      scanRAF = requestAnimationFrame(tick);
+    }
+    scanRAF = requestAnimationFrame(tick);
+  }).catch(function(){
+    scanCameraDenied = true;
+    showScanError('Camera permission denied — use manual entry below.');
+  });
+}
+
+// Fallback used by callers that want the camera back on *after* some other action
+// (a failed scan, a blocked check-in, a network hiccup). If we already know the
+// camera is denied, don't retry — that just re-fires the same rejected promise and
+// overwrites whatever real error/result message is currently showing.
+function restartScanCameraIfAllowed(){
+  if(scanCameraDenied) return;
+  startScanCamera();
+}
+
+function showScanError(msg){
+  const box = document.getElementById('scanErrorBox');
+  if(box) box.innerHTML = '<div class="login-error">' + esc(msg) + '</div>';
+}
+
+// Resolves to {lat,lng} or null (no geolocation support, permission denied, or timeout —
+// null just means checkIn proceeds without coordinates; the server only requires them
+// for locations that have GPS geofencing configured).
+function getGeoPosition(){
+  return new Promise(function(resolve){
+    if(!navigator.geolocation){ resolve(null); return; }
+    navigator.geolocation.getCurrentPosition(
+      function(pos){ resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }); },
+      function(){ resolve(null); },
+      { enableHighAccuracy: true, timeout: 8000, maximumAge: 30000 }
+    );
+  });
+}
+
+function submitScannedCode(code){
+  stopScanCamera();
+  apiGet('scanLocation', { code: code }).then(function(res){
+    // scanLocation's response comes back flat ({ok, location, error}), not
+    // wrapped in a "data" envelope the way bootstrap/read are — reading
+    // res.data here always missed, so every scan (valid or not) fell through
+    // to the generic "not recognized" message.
+    if(!res.ok){
+      showScanError(res.error || 'Location code not recognized.');
+      restartScanCameraIfAllowed();
+      return;
+    }
+    STATE.currentLocation = res.location;
+    STATE.view = 'location';
+    render();
+    getGeoPosition().then(function(pos){
+      apiPost('checkIn', {
+        worker: STATE.user.name,
+        locationId: STATE.currentLocation.locationId,
+        lat: pos ? pos.lat : undefined,
+        lng: pos ? pos.lng : undefined
+      }).then(function(r){
+        if(r.ok){
+          STATE.myStatus = r.status;
+          render();
+        } else if(r.outOfRange || r.needsGps){
+          // Geofenced location and we're not confirmed nearby — don't let the
+          // worker silently "check in" from off-site.
+          STATE.currentLocation = null;
+          STATE.view = 'scan';
+          render();
+          showToast(r.error || 'Check-in blocked — you must be at the location.', 'warn');
+          restartScanCameraIfAllowed();
+        }
+        // Any other failure (e.g. network hiccup) fails silently — startTask retries the write.
+      }).catch(function(){ /* check-in failed silently; worker can still start a task, which retries via startTask */ });
+    });
+  }).catch(function(){
+    showScanError('Could not reach the sheet — check your connection and try again.');
+    restartScanCameraIfAllowed();
+  });
+}
+
+function renderLocation(){
+  if(!STATE.currentLocation){
+    renderShell('<div class="empty-state"><span class="ic">📍</span>No location scanned yet.<div style="margin-top:14px;"><button class="btn btn-primary" id="goScan" style="width:auto;padding:10px 18px;">Scan a Location</button></div></div>');
+    document.getElementById('goScan').addEventListener('click', function(){ STATE.view = 'scan'; render(); });
+    return;
+  }
+  const loc = STATE.currentLocation;
+  const active = STATE.myStatus && STATE.myStatus['Current_State'] === 'Working' ? STATE.myStatus : null;
+
+  let html = '<div class="location-header"><div class="loc-name">' + esc(loc.locationName) + '</div>' +
+    '<div class="loc-sub">' + (STATE.myStatus ? esc(STATE.myStatus['Current_State']) + ' since ' + esc(STATE.myStatus['Present_Since']||'') : 'Checked in') + '</div></div>';
+
+  if(loc.openIssues && loc.openIssues.length){
+    loc.openIssues.forEach(function(i){
+      html += '<div class="issue-card"><b>Open Issue' + (i.date ? ' · ' + esc(i.date) : '') + '</b>' + esc(i.issue) + '</div>';
+    });
+  }
+
+  if(active){
+    html += '<div class="session-bar"><div><div class="sb-task">Working — ' + esc(active['Active_Task']) + '</div>' +
+      '<div class="sb-time">Started ' + esc(active['Task_Started_At']||'') + '</div></div>' +
+      '<button class="btn btn-primary" id="completeTaskBtn" data-task="' + esc(active['Active_Task']) + '">Complete &amp; Save</button></div>';
+  }
+
+  html += '<h3 class="block-title">Scheduled Routine Work</h3>';
+  if(!loc.tasks || !loc.tasks.length){
+    html += '<div class="empty-state"><span class="ic">🗒️</span>No routine tasks configured for this location.</div>';
+  } else {
+    loc.tasks.forEach(function(t){
+      const isActive = active && active['Active_Task'] === t.task;
+      html += '<div class="task-card"><span class="tc-name">' + esc(t.task) + '</span>' +
+        '<button class="btn ' + (isActive?'btn-secondary':'btn-primary') + ' tc-btn start-task-btn" ' +
+        'data-task="' + esc(t.task) + '" data-logsheet="' + esc(t.logSheet||'') + '" ' + (isActive?'disabled':'') + '>' +
+        (isActive ? 'In Progress' : 'Start') + '</button></div>';
+    });
+  }
+
+  renderShell(html);
+
+  document.querySelectorAll('.start-task-btn').forEach(function(b){
+    b.addEventListener('click', function(){
+      const task = b.getAttribute('data-task');
+      apiPost('startTask', { worker: STATE.user.name, locationId: loc.locationId, task: task }).then(function(r){
+        if(r.ok) STATE.myStatus = r.status;
+        render();
+      });
+    });
+  });
+  const completeBtn = document.getElementById('completeTaskBtn');
+  if(completeBtn){
+    completeBtn.addEventListener('click', function(){
+      const task = completeBtn.getAttribute('data-task');
+      const t = (loc.tasks||[]).find(function(x){ return x.task === task; });
+      const logSheet = t ? t.logSheet : null;
+      if(logSheet && LOG_CONFIGS[logSheet]) openLogModal(logSheet, task);
+      else showToast('This task has no log sheet configured.', 'warn');
+    });
+  }
+}
+
+/* =========================================================================
+   Floating break button
+   ========================================================================= */
+function breakFab(){
+  if(!STATE.user) return '';
+  const onBreak = STATE.myStatus && (STATE.myStatus['Current_State'] === 'On Break' || STATE.myStatus['Current_State'] === 'On Lunch');
+  return '<button class="break-fab' + (onBreak?' on-break':'') + '" id="breakFabBtn">' +
+    (onBreak ? '⏸ End ' + esc(STATE.myStatus['Current_State']) : '☕ Take Break') +
+  '</button>';
+}
+function attachBreakFab(){
+  const btn = document.getElementById('breakFabBtn');
+  if(!btn) return;
+  btn.addEventListener('click', function(){
+    const onBreak = STATE.myStatus && (STATE.myStatus['Current_State'] === 'On Break' || STATE.myStatus['Current_State'] === 'On Lunch');
+    if(onBreak){
+      apiPost('endBreak', { worker: STATE.user.name }).then(function(r){
+        if(r.ok) STATE.myStatus = r.status;
+        showToast('Break ended — back to it.', 'success');
+        render();
+      });
+    } else {
+      openBreakChoiceModal();
+    }
+  });
+}
+function openBreakChoiceModal(){
+  const overlay = el('<div class="modal-overlay"></div>');
+  const sheet = el('<div class="modal-sheet"></div>');
+  sheet.innerHTML =
+    '<div class="modal-head"><h2>Take a Break</h2><button class="modal-close" id="modalClose">&times;</button></div>' +
+    '<div class="break-choice-sheet">' +
+      '<button class="btn btn-secondary" id="restBtn">15-Min Rest Break</button>' +
+      '<button class="btn btn-secondary" id="mealBtn">Meal / Lunch Break</button>' +
+    '</div>';
+  overlay.appendChild(sheet);
+  document.getElementById('app').appendChild(overlay);
+  function close(){ overlay.remove(); }
+  document.getElementById('modalClose').addEventListener('click', close);
+  overlay.addEventListener('click', function(e){ if(e.target === overlay) close(); });
+  function go(type){
+    apiPost('takeBreak', { worker: STATE.user.name, breakType: type }).then(function(r){
+      if(r.ok) STATE.myStatus = r.status;
+      close();
+      showToast('On break — tap the button again when you\'re back.', 'success');
+      render();
+    });
+  }
+  document.getElementById('restBtn').addEventListener('click', function(){ go(BREAK_TYPES.REST); });
+  document.getElementById('mealBtn').addEventListener('click', function(){ go(BREAK_TYPES.MEAL); });
+}
+
+/* =========================================================================
+   Offline queue
+   ========================================================================= */
+function queueSubmission(tab, row){
+  STATE.pendingQueue.push({ tab: tab, row: row, ts: Date.now() });
+  localStorage.setItem('sa_pending', JSON.stringify(STATE.pendingQueue));
+}
+function syncPendingQueue(){
+  if(!STATE.pendingQueue.length || !navigator.onLine) { render(); return; }
+  const queue = STATE.pendingQueue.slice();
+  let remaining = queue.length;
+  let anyFailed = false;
+  queue.forEach(function(item){
+    apiPost('appendLog', { tab: item.tab, row: item.row }).then(function(res){
+      remaining--;
+      if(res.ok){
+        STATE.pendingQueue = STATE.pendingQueue.filter(function(q){ return q.ts !== item.ts; });
+        localStorage.setItem('sa_pending', JSON.stringify(STATE.pendingQueue));
+      } else {
+        anyFailed = true;
+      }
+      if(remaining === 0){
+        if(!anyFailed) loadData(); else render();
+      }
+    }).catch(function(){
+      remaining--; anyFailed = true;
+      if(remaining === 0) render();
+    });
+  });
+}
+window.addEventListener('online', syncPendingQueue);
+setInterval(syncPendingQueue, 60000);
+
+/* =========================================================================
+   Toast
+   ========================================================================= */
+let toastTimer = null;
+function showToast(msg, type){
+  const existing = document.querySelector('.toast');
+  if(existing) existing.remove();
+  const t = el('<div class="toast ' + (type||'') + '">' + esc(msg) + '</div>');
+  document.getElementById('app').appendChild(t);
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(function(){ t.remove(); }, 3200);
+}
+
+/* =========================================================================
+   Login view
+   ========================================================================= */
+let pinBuffer = '';
+function renderLogin(){
+  const app = document.getElementById('app');
+  app.innerHTML =
+    '<div class="login-wrap"><div class="login-card">' +
+      '<div class="login-brand">' +
+        '<div class="brand-mark">SA</div>' +
+        '<h1>SeasonAware</h1>' +
+        '<p>Ranch Operations Log-In</p>' +
+      '</div>' +
+      (STATE.loginError ? '<div class="login-error">' + esc(STATE.loginError) + '</div>' : '') +
+      '<div class="field"><label>Your name</label><input id="loginName" type="text" placeholder="e.g. Jordan Reyes" autocomplete="name"></div>' +
+      '<div class="field"><label>4-digit PIN</label>' +
+        '<div class="pin-display" id="pinDisplay"></div>' +
+      '</div>' +
+      '<div class="pin-pad" id="pinPad"></div>' +
+      '<div style="height:14px"></div>' +
+      '<button class="btn btn-primary" id="loginSubmit" disabled>Log In</button>' +
+    '</div></div>';
+
+  renderPinDisplay();
+  const pad = document.getElementById('pinPad');
+  ['1','2','3','4','5','6','7','8','9','clr','0','del'].forEach(function(k){
+    const isWide = (k === 'clr' || k === 'del');
+    const label = k === 'clr' ? 'Clear' : (k === 'del' ? 'Back' : k);
+    const btn = el('<button class="pin-key' + (isWide?' wide':'') + '" type="button">' + label + '</button>');
+    btn.addEventListener('click', function(){
+      if(k === 'clr'){ pinBuffer=''; }
+      else if(k === 'del'){ pinBuffer = pinBuffer.slice(0,-1); }
+      else if(pinBuffer.length < 4){ pinBuffer += k; }
+      renderPinDisplay();
+    });
+    pad.appendChild(btn);
+  });
+
+  document.getElementById('loginSubmit').addEventListener('click', doLogin);
+  document.getElementById('loginName').addEventListener('keydown', function(e){
+    if(e.key === 'Enter') doLogin();
+  });
+}
+function renderPinDisplay(){
+  const disp = document.getElementById('pinDisplay');
+  if(!disp) return;
+  disp.innerHTML = '';
+  for(let i=0;i<4;i++){
+    disp.appendChild(el('<div class="pin-dot' + (i < pinBuffer.length ? ' filled':'') + '"></div>'));
+  }
+  const btn = document.getElementById('loginSubmit');
+  if(btn) btn.disabled = pinBuffer.length !== 4;
+}
+function doLogin(){
+  const name = document.getElementById('loginName').value.trim();
+  if(!name || pinBuffer.length !== 4){ return; }
+  const btn = document.getElementById('loginSubmit');
+  btn.disabled = true; btn.textContent = 'Checking…';
+  apiPost('login', { name: name, pin: pinBuffer }).then(function(res){
+    if(res.ok){
+      STATE.user = res.user;
+      STATE.loginError = null;
+      saveSession(res.user);
+      pinBuffer = '';
+      render();
+      loadData();
+    } else {
+      STATE.loginError = res.error || 'Login failed.';
+      pinBuffer = '';
+      renderLogin();
+    }
+  }).catch(function(){
+    STATE.loginError = 'Network error — check the SCRIPT_URL in CONFIG.';
+    pinBuffer = '';
+    renderLogin();
+  });
+}
+
+/* =========================================================================
+   App shell (chrome + nav) for logged-in views
+   ========================================================================= */
+function renderShell(innerHTML){
+  const app = document.getElementById('app');
+  const isManager = STATE.user.role === 'Ranch Manager' || STATE.user.role === 'Founder';
+  app.innerHTML =
+    '<div class="chrome-bar">' +
+      '<div class="brand">' +
+        '<div class="brand-mark">SA</div>' +
+        '<div><span class="brand-name">SeasonAware</span><span class="brand-sub">' + esc(CONFIG.RANCH_NAME) + '</span></div>' +
+      '</div>' +
+      '<div class="user-chip">' +
+        '<div class="avatar">' + esc(initials(STATE.user.name)) + '</div>' +
+        '<div class="user-meta"><span class="user-name">' + esc(STATE.user.name) + '</span><span class="user-role">' + esc(STATE.user.role) + '</span></div>' +
+        '<button class="logout-btn" id="logoutBtn">Log Out</button>' +
+      '</div>' +
+    '</div>' +
+    '<div class="view-container" id="viewContainer">' + innerHTML + '</div>' +
+    breakFab() +
+    '<div class="bottom-nav">' +
+      navBtn('today','📋','Today') +
+      navBtn('scan','📷','Scan') +
+      navBtn('projects','📁','Projects') +
+      navBtn('mylog','🧾','My Log') +
+      (isManager ? navBtn('team','📊','Team') : '') +
+    '</div>';
+
+  document.getElementById('logoutBtn').addEventListener('click', function(){
+    stopScanCamera();
+    clearSession();
+    STATE.user = null; STATE.data = null;
+    render();
+  });
+  document.querySelectorAll('.nav-btn').forEach(function(b){
+    b.addEventListener('click', function(){
+      if(STATE.view === 'scan') stopScanCamera();
+      STATE.view = b.getAttribute('data-view');
+      render();
+    });
+  });
+  attachBreakFab();
+}
+function navBtn(view, icon, label){
+  return '<button class="nav-btn' + (STATE.view===view?' active':'') + '" data-view="' + view + '">' +
+    '<span class="ic">' + icon + '</span>' + label + '</button>';
+}
+
+/* =========================================================================
+   TODAY view
+   ========================================================================= */
+function renderToday(){
+  const timeline = (STATE.data.timeline.rows || []).filter(function(r){ return r['Date'] === STATE.selectedDate; });
+  const blocks = ['Morning','Midday','Afternoon','Evening'];
+  let html = pendingBanner() + dateBar();
+
+  if(!timeline.length){
+    html += '<div class="empty-state"><span class="ic">🗓️</span>No tasks scheduled for this date.<br>The timeline covers a 60-day rolling window from today.</div>';
+    renderShell(html); attachDateBar(); return;
+  }
+
+  blocks.forEach(function(block){
+    const rows = timeline.filter(function(r){ return r['TimeBlock'] === block; })
+      .sort(function(a,b){ return a['Slot']-b['Slot']; });
+    if(!rows.length) return;
+    html += '<div class="block-group"><h3 class="block-title">' + block + '</h3>';
+    rows.forEach(function(r){
+      const task = r['What (Task)'];
+      if(!task) { return; }
+      html += taskTicket(r, task);
+    });
+    html += '</div>';
+  });
+
+  renderShell(html);
+  attachDateBar();
+  attachTicketButtons();
+}
+
+function dateBar(){
+  return '<div class="date-bar">' +
+    '<button class="arrow" id="prevDay">‹</button>' +
+    '<div class="date-label"><b>' + fmtDateHuman(STATE.selectedDate) + '</b>' + STATE.selectedDate + '</div>' +
+    '<button class="arrow" id="nextDay">›</button>' +
+    '</div>' +
+    (STATE.selectedDate !== todayISO() ? '<div style="text-align:center;margin:-8px 0 14px;"><button class="today-jump" id="jumpToday">Jump to Today</button></div>' : '');
+}
+function attachDateBar(){
+  const prev = document.getElementById('prevDay');
+  const next = document.getElementById('nextDay');
+  const jump = document.getElementById('jumpToday');
+  if(prev) prev.addEventListener('click', function(){ STATE.selectedDate = addDays(STATE.selectedDate,-1); render(); });
+  if(next) next.addEventListener('click', function(){ STATE.selectedDate = addDays(STATE.selectedDate,1); render(); });
+  if(jump) jump.addEventListener('click', function(){ STATE.selectedDate = todayISO(); render(); });
+}
+
+function taskTicket(r, task){
+  const start = r['Scheduled_Start'] || '';
+  const end = r['Scheduled_End'] || '';
+  const role = r['Who (Role)'];
+  const logSheet = r['LogSheet'];
+  const workOrderId = r['Work_Order_ID'];
+  const statusToggle = r['Worker_Status_Toggle'];
+  const entries = STATE.loggedIndex[STATE.selectedDate + '|' + task] || [];
+  const isLogged = entries.length > 0;
+  const isPending = isLogged && entries.every(function(e){ return e._pending; });
+
+  let stamp = '';
+  if(isLogged){
+    stamp = '<div class="stamp' + (isPending?' pending':'') + '">' + (isPending ? 'PENDING' : 'LOGGED') + '</div>';
+  }
+
+  let actionBtn = '';
+  if(logSheet && LOG_CONFIGS[logSheet]){
+    actionBtn = '<div class="ticket-action"><button class="btn ' + (isLogged?'btn-secondary':'btn-primary') + ' log-btn" ' +
+      'data-tab="' + logSheet + '" data-task="' + esc(task) + '">' +
+      (isLogged ? 'Add Another Entry' : 'Log Entry') + '</button></div>';
+  }
+  if(workOrderId){
+    actionBtn += '<div class="ticket-action"><button class="btn btn-secondary go-workorder-btn" data-wo="' + esc(workOrderId) + '">Open Work Order</button></div>';
+  }
+
+  return '<div class="task-ticket">' +
+    '<div class="ticket-stub"></div>' +
+    '<div class="ticket-body">' + stamp +
+      '<div class="ticket-top"><div class="ticket-task">' + esc(task) + '</div></div>' +
+      '<div class="ticket-meta">' +
+        (start ? '<span class="chip time">' + esc(start) + (end?'–'+esc(end):'') + '</span>' : '') +
+        (role ? '<span class="chip role">' + esc(role) + '</span>' : '<span class="chip">Role unassigned</span>') +
+        (logSheet ? '<span class="chip ' + (LOG_META[logSheet]?LOG_META[logSheet].badge:'') + '">' + (LOG_META[logSheet]?LOG_META[logSheet].label:logSheet) + '</span>' : '') +
+        (statusToggle ? '<span class="chip">' + esc(statusToggle) + '</span>' : '') +
+      '</div>' +
+      actionBtn +
+    '</div>' +
+  '</div>';
+}
+
+function attachTicketButtons(){
+  document.querySelectorAll('.log-btn').forEach(function(b){
+    b.addEventListener('click', function(){
+      openLogModal(b.getAttribute('data-tab'), b.getAttribute('data-task'));
+    });
+  });
+  document.querySelectorAll('.go-workorder-btn').forEach(function(b){
+    b.addEventListener('click', function(){
+      const id = b.getAttribute('data-wo');
+      const wo = ((STATE.data.workOrders && STATE.data.workOrders.rows) || []).find(function(w){ return w['Work_Order_ID']===id; });
+      if(wo) openWorkOrderModal(wo);
+      else { STATE.view = 'projects'; render(); }
+    });
+  });
+}
+
+function pendingBanner(){
+  if(!STATE.pendingQueue.length) return '';
+  return '<div class="sync-banner"><span>' + STATE.pendingQueue.length + ' entr' + (STATE.pendingQueue.length===1?'y':'ies') + ' saved offline, not yet synced.</span>' +
+    '<button id="syncNowBtn">Sync Now</button></div>';
+}
+function attachSyncBanner(){
+  const b = document.getElementById('syncNowBtn');
+  if(b) b.addEventListener('click', syncPendingQueue);
+}
+
+/* =========================================================================
+   Log entry modal
+   ========================================================================= */
+function openLogModal(tab, task){
+  const cfg = LOG_CONFIGS[tab];
+  const overlay = el('<div class="modal-overlay"></div>');
+  const sheet = el('<div class="modal-sheet"></div>');
+  let fieldsHtml = '';
+  cfg.fields.forEach(function(f){
+    const label = f.label || f.key;
+    const id = 'mf_' + f.key.replace(/[^a-zA-Z0-9]/g,'_');
+    let defVal = '';
+    if(f.key === 'Date') defVal = STATE.selectedDate;
+    if(f.key === 'Time') defVal = nowHHMM();
+    if(f.key === 'Task') defVal = task;
+    if(f.type === 'select'){
+      fieldsHtml += '<div class="field"><label>' + esc(label) + '</label><select id="' + id + '" data-key="' + esc(f.key) + '">' +
+        f.options.map(function(o){ return '<option value="'+esc(o)+'">'+esc(o)+'</option>'; }).join('') +
+        '</select></div>';
+    } else if(f.type === 'textarea'){
+      fieldsHtml += '<div class="field"><label>' + esc(label) + '</label><textarea id="' + id + '" data-key="' + esc(f.key) + '"></textarea></div>';
+    } else if(f.type === 'photo'){
+      fieldsHtml += '<div class="field"><label>' + esc(label) + '</label>' +
+        '<input id="' + id + '" data-key="' + esc(f.key) + '" type="file" accept="image/*" capture="environment">' +
+        '<div id="' + id + '_preview" style="margin-top:8px;"></div></div>';
+    } else {
+      fieldsHtml += '<div class="field"><label>' + esc(label) + '</label><input id="' + id + '" data-key="' + esc(f.key) + '" type="' + f.type + '" value="' + esc(defVal) + '"></div>';
+    }
+  });
+
+  sheet.innerHTML =
+    '<div class="modal-head"><h2>' + esc(cfg.title) + '</h2><button class="modal-close" id="modalClose">&times;</button></div>' +
+    fieldsHtml +
+    '<div class="modal-actions">' +
+      '<button class="btn btn-secondary" id="modalCancel">Cancel</button>' +
+      '<button class="btn btn-primary" id="modalSave">Save Entry</button>' +
+    '</div>';
+
+  overlay.appendChild(sheet);
+  document.getElementById('app').appendChild(overlay);
+
+  function close(){ overlay.remove(); }
+  document.getElementById('modalClose').addEventListener('click', close);
+  document.getElementById('modalCancel').addEventListener('click', close);
+  overlay.addEventListener('click', function(e){ if(e.target === overlay) close(); });
+
+  const photoField = cfg.fields.find(function(f){ return f.type === 'photo'; });
+  if(photoField){
+    const photoId = 'mf_' + photoField.key.replace(/[^a-zA-Z0-9]/g,'_');
+    document.getElementById(photoId).addEventListener('change', function(e){
+      const preview = document.getElementById(photoId + '_preview');
+      const file = e.target.files[0];
+      if(!file){ preview.innerHTML = ''; return; }
+      preview.innerHTML = '<img src="' + URL.createObjectURL(file) + '" style="max-width:100%;max-height:160px;border-radius:8px;border:1.5px solid var(--line);">';
+    });
+  }
+
+  // File reading is async, so photos are resolved first and merged into the
+  // row before it's handed off to submitLogEntry.
+  function readPhotoAsBase64(){
+    if(!photoField) return Promise.resolve(null);
+    const input = document.getElementById('mf_' + photoField.key.replace(/[^a-zA-Z0-9]/g,'_'));
+    const file = input && input.files[0];
+    if(!file) return Promise.resolve(null);
+    return new Promise(function(resolve){
+      const reader = new FileReader();
+      reader.onload = function(){
+        const base64 = reader.result.split(',')[1] || '';
+        resolve({ base64: base64, filename: file.name, mimeType: file.type });
+      };
+      reader.onerror = function(){ resolve(null); };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  document.getElementById('modalSave').addEventListener('click', function(){
+    const saveBtn = document.getElementById('modalSave');
+    saveBtn.disabled = true; saveBtn.textContent = 'Saving…';
+
+    const row = {};
+    cfg.fields.forEach(function(f){
+      if(f.type === 'photo') return; // handled separately below
+      const id = 'mf_' + f.key.replace(/[^a-zA-Z0-9]/g,'_');
+      row[f.key] = document.getElementById(id).value;
+    });
+    row['LoggedBy'] = STATE.user.name;
+    row['LoggedAt'] = new Date().toISOString();
+
+    readPhotoAsBase64().then(function(photo){
+      if(photo){
+        row['PhotoBase64'] = photo.base64;
+        row['PhotoFilename'] = photo.filename;
+        row['PhotoMimeType'] = photo.mimeType;
+      }
+      submitLogEntry(tab, row, close);
+    });
+  });
+}
+
+function submitLogEntry(tab, row, onDone){
+  const btn = document.getElementById('modalSave');
+  if(btn){ btn.disabled = true; btn.textContent = 'Saving…'; }
+
+  function optimisticAdd(pending){
+    const k = row['Date'] + '|' + row['Task'];
+    if(!STATE.loggedIndex[k]) STATE.loggedIndex[k] = [];
+    STATE.loggedIndex[k].push(Object.assign({ _tab: tab, _pending: pending }, row));
+    const logKey = { HEALTH_LOG:'healthLog', WATER_LOG:'waterLog', MOVEMENT_LOG:'movementLog' }[tab];
+    if(STATE.data && STATE.data[logKey]) STATE.data[logKey].rows.push(row);
+  }
+
+  if(!navigator.onLine){
+    queueSubmission(tab, row);
+    optimisticAdd(true);
+    onDone();
+    showToast('No connection — saved on this device, will sync automatically.', 'warn');
+    render();
+    return;
+  }
+
+  apiPost('appendLog', { tab: tab, row: row }).then(function(res){
+    if(res.ok){
+      onDone();
+      showToast('Entry saved to ' + LOG_META[tab].label + ' Log.', 'success');
+      loadData();
+    } else {
+      queueSubmission(tab, row);
+      optimisticAdd(true);
+      onDone();
+      showToast('Could not reach the sheet — saved locally, will retry.', 'warn');
+      render();
+    }
+  }).catch(function(){
+    queueSubmission(tab, row);
+    optimisticAdd(true);
+    onDone();
+    showToast('Could not reach the sheet — saved locally, will retry.', 'warn');
+    render();
+  });
+}
+
+/* =========================================================================
+   MY LOG view — entries the logged-in worker personally submitted
+   ========================================================================= */
+function renderMyLog(){
+  const all = allLogEntries().filter(function(e){ return e['LoggedBy'] === STATE.user.name; })
+    .sort(function(a,b){ return (b['Date']+b['Time']).localeCompare(a['Date']+a['Time']); });
+
+  let html = '<h2 class="section-title">My Log Entries</h2>' + pendingBanner();
+  if(!all.length){
+    html += '<div class="empty-state"><span class="ic">🧾</span>Entries you log will show up here, tagged with your name for accountability.</div>';
+  } else {
+    all.slice(0,50).forEach(function(e){ html += entryRow(e); });
+  }
+  renderShell(html);
+  attachSyncBanner();
+}
+
+function allLogEntries(){
+  if(!STATE.data) return [];
+  const out = [];
+  ['healthLog','waterLog','movementLog'].forEach(function(key){
+    const tab = { healthLog:'HEALTH_LOG', waterLog:'WATER_LOG', movementLog:'MOVEMENT_LOG' }[key];
+    (STATE.data[key].rows||[]).forEach(function(r){
+      if(r['Task']) out.push(Object.assign({ _tab: tab }, r));
+    });
+  });
+  return out;
+}
+
+function entryRow(e){
+  const meta = LOG_META[e._tab] || {label:e._tab, badge:''};
+  let detail = '';
+  if(e._tab === 'HEALTH_LOG') detail = [e['IssueType'], e['Severity'], e['ActionTaken']].filter(Boolean).join(' · ');
+  if(e._tab === 'WATER_LOG') detail = [e['System'], e['Status'], e['IssueFound']].filter(Boolean).join(' · ');
+  if(e._tab === 'MOVEMENT_LOG') detail = [e['From_Location']&&('From '+e['From_Location']), e['To_Location']&&('To '+e['To_Location']), e['MovementType']].filter(Boolean).join(' · ');
+  return '<div class="entry-row">' +
+    '<div class="entry-top"><span class="entry-task">' + esc(e['Task']) + '</span><span class="entry-date">' + esc(e['Date']) + (e['Time']?' '+esc(e['Time']):'') + '</span></div>' +
+    '<span class="chip ' + meta.badge + '" style="margin-top:6px;display:inline-block;">' + meta.label + '</span>' +
+    (e._pending ? ' <span class="chip" style="background:#F5E5C8;color:#8F6720;">Pending Sync</span>' : '') +
+    (e['PhotoURL'] ? ' <span class="chip">📷 Photo</span>' : (e['PhotoBase64'] ? ' <span class="chip">📷 Photo (uploading)</span>' : '')) +
+    (detail ? '<div class="entry-detail">' + esc(detail) + '</div>' : '') +
+    (e['LoggedBy'] ? '<div class="entry-by">Logged by ' + esc(e['LoggedBy']) + '</div>' : '') +
+    (e['PhotoURL'] ? '<div style="margin-top:6px;"><a href="' + esc(e['PhotoURL']) + '" target="_blank" rel="noopener">View photo</a></div>' : '') +
+  '</div>';
+}
+
+/* =========================================================================
+   PROJECTS view — Directive -> Project -> Work Order pipeline
+   Workers see and act on their own assigned work orders. Ranch Manager /
+   Founder see the full pipeline: directives, every project's rollup, and
+   every project's work orders.
+   ========================================================================= */
+function renderProjects(){
+  const isManager = STATE.user.role === 'Ranch Manager' || STATE.user.role === 'Founder';
+  let html = '<h2 class="section-title">' + (isManager ? 'Directives & Projects' : 'My Work Orders') + '</h2>';
+
+  if(isManager){
+    const directives = (STATE.data.directives && STATE.data.directives.rows) || [];
+    if(!directives.length){
+      html += '<div class="empty-state"><span class="ic">🧭</span>No founder directives on file yet.</div>';
+    } else {
+      html += '<h3 class="block-title">Founder Directives</h3>';
+      directives.forEach(function(d){ html += directiveCard(d); });
+    }
+
+    const projects = (STATE.data.projects && STATE.data.projects.rows || []).filter(function(p){ return p['Project_ID']; });
+    html += '<h3 class="block-title" style="margin-top:20px;">Projects</h3>';
+    if(!projects.length){
+      html += '<div class="empty-state"><span class="ic">🏗️</span>No projects on file yet.</div>';
+    } else {
+      projects.forEach(function(p){ html += projectCard(p, true); });
+    }
+  } else {
+    html += '<div class="filter-row">' +
+      [['OPEN','Open'],['ALL','All'],['COMPLETED','Completed']].map(function(f){
+        return '<button class="filter-chip' + (STATE.projectsFilter===f[0]?' active':'') + '" data-projfilter="' + f[0] + '">' + f[1] + '</button>';
+      }).join('') +
+    '</div>';
+
+    let mine = myWorkOrders();
+    if(STATE.projectsFilter === 'OPEN') mine = mine.filter(function(w){ return w['Status'] !== 'Completed'; });
+    else if(STATE.projectsFilter === 'COMPLETED') mine = mine.filter(function(w){ return w['Status'] === 'Completed'; });
+
+    if(!mine.length){
+      html += '<div class="empty-state"><span class="ic">🏗️</span>No work orders assigned to you right now.</div>';
+    } else {
+      mine.forEach(function(w){ html += workOrderCard(w); });
+    }
+  }
+
+  renderShell(html);
+  document.querySelectorAll('[data-projfilter]').forEach(function(b){
+    b.addEventListener('click', function(){
+      STATE.projectsFilter = b.getAttribute('data-projfilter');
+      render();
+    });
+  });
+  attachWorkOrderButtons();
+}
+
+function priorityBadgeClass(p){
+  const key = String(p||'').toLowerCase();
+  if(key==='critical') return 'p-critical';
+  if(key==='high') return 'p-high';
+  if(key==='low') return 'p-low';
+  return 'p-normal';
+}
+function statusPillClass(s){
+  const map = { 'Pending':'st-pending', 'In Progress':'st-inprogress', 'Completed':'st-completed', 'Blocked':'st-blocked' };
+  return map[s] || 'st-pending';
+}
+
+function directiveCard(d){
+  return '<div class="directive-card">' +
+    '<div class="directive-top"><span class="directive-title">' + esc(d['Directive_Title']) + '</span>' +
+      (d['Priority'] ? '<span class="priority-badge ' + priorityBadgeClass(d['Priority']) + '">' + esc(d['Priority']) + '</span>' : '') +
+    '</div>' +
+    '<div class="directive-meta">' +
+      esc(d['Category']||'') + (d['Deadline'] ? ' · Due ' + esc(d['Deadline']) : '') +
+      (d['Budget_Cap'] ? ' · Budget $' + esc(d['Budget_Cap']) : '') +
+      (d['Assigned_Manager'] ? ' · ' + esc(d['Assigned_Manager']) : '') +
+    '</div>' +
+    (d['What_Needs_To_Be_Done'] ? '<div class="entry-detail" style="margin-top:7px;">' + esc(d['What_Needs_To_Be_Done']) + '</div>' : '') +
+    (d['Reason_Objective'] ? '<div class="directive-why">Why: ' + esc(d['Reason_Objective']) + '</div>' : '') +
+    '<div style="margin-top:8px;"><span class="chip">' + esc(d['Status']||'—') + '</span></div>' +
+  '</div>';
+}
+
+function projectCard(p, withWorkOrders){
+  const pct = Math.round((Number(p['Progress_%'])||0)*100);
+  const wos = withWorkOrders ? workOrdersForProject(p['Project_ID']) : [];
+  return '<div class="project-card">' +
+    '<div class="project-top"><span class="project-name">' + esc(p['Project_Name']) + '</span>' +
+      (p['Priority'] ? '<span class="priority-badge ' + priorityBadgeClass(p['Priority']) + '">' + esc(p['Priority']) + '</span>' : '') +
+    '</div>' +
+    '<div class="project-meta">' + esc(p['Category']||'') +
+      (p['Assigned_To'] ? ' · ' + esc(p['Assigned_To']) : '') +
+      (p['Due_Date'] ? ' · Due ' + esc(p['Due_Date']) : '') +
+    '</div>' +
+    '<div class="progress-track"><div class="progress-fill" style="width:' + pct + '%;"></div></div>' +
+    '<div class="progress-label"><span>' + esc(p['Status']||'—') + '</span><span>' + pct + '%</span></div>' +
+    (withWorkOrders && wos.length ? '<div class="wo-sub-list">' + wos.map(function(w){ return workOrderCard(w); }).join('') + '</div>' : '') +
+  '</div>';
+}
+
+function workOrderCard(w){
+  const status = w['Status'] || 'Pending';
+  const showActions = status !== 'Completed';
+  return '<div class="wo-card" data-wo-id="' + esc(w['Work_Order_ID']) + '">' +
+    '<div class="wo-top"><span class="wo-desc">' + esc(w['Task_Description']) + '</span>' +
+      '<span class="status-pill ' + statusPillClass(status) + '">' + esc(status) + '</span>' +
+    '</div>' +
+    '<div class="wo-meta">' +
+      (w['Scheduled_Date'] ? '<span>📅 ' + esc(w['Scheduled_Date']) + '</span>' : '') +
+      (w['Est_Hours'] ? '<span>Est ' + esc(w['Est_Hours']) + 'h</span>' : '') +
+      (w['Act_Hours'] ? '<span>Actual ' + esc(w['Act_Hours']) + 'h</span>' : '') +
+      (w['Assigned_Worker'] ? '<span>' + esc(w['Assigned_Worker']) + '</span>' : '') +
+      (w['Materials_Needed'] ? '<span>🧰 ' + esc(w['Materials_Needed']) + '</span>' : '') +
+    '</div>' +
+    (w['Photo_URL'] ? '<a class="wo-photo-link" href="' + esc(w['Photo_URL']) + '" target="_blank" rel="noopener">📷 View photo</a>' : '') +
+    (showActions ? '<div class="wo-actions">' +
+      (status === 'Pending' ? '<button class="btn btn-secondary wo-start-btn" data-wo="' + esc(w['Work_Order_ID']) + '">Start</button>' : '') +
+      '<button class="btn btn-primary wo-update-btn" data-wo="' + esc(w['Work_Order_ID']) + '">' + (status==='In Progress'?'Complete & Log Hours':'Update') + '</button>' +
+    '</div>' : '') +
+  '</div>';
+}
+
+function attachWorkOrderButtons(){
+  document.querySelectorAll('.wo-start-btn').forEach(function(b){
+    b.addEventListener('click', function(){
+      const id = b.getAttribute('data-wo');
+      b.disabled = true; b.textContent = '…';
+      apiPost('updateWorkOrder', { workOrderId: id, fields: { Status: 'In Progress' } }).then(function(res){
+        if(res.ok){ showToast('Work order started.', 'success'); loadData(); }
+        else { showToast(res.error || 'Could not start work order.', 'warn'); render(); }
+      }).catch(function(){ showToast('Could not reach the sheet — try again.', 'warn'); render(); });
+    });
+  });
+  document.querySelectorAll('.wo-update-btn').forEach(function(b){
+    b.addEventListener('click', function(){
+      const id = b.getAttribute('data-wo');
+      const wo = myWorkOrders().find(function(w){ return w['Work_Order_ID']===id; }) ||
+        ((STATE.data.workOrders.rows||[]).find(function(w){ return w['Work_Order_ID']===id; }));
+      if(wo) openWorkOrderModal(wo);
+    });
+  });
+}
+
+function openWorkOrderModal(wo){
+  const statusOptions = lookupOptions('Work_Order_Status');
+  // WORK_ORDERS doesn't have a Notes column as of this workbook version — only
+  // show the field (and only ever send it) if the sheet actually has somewhere
+  // to put it, so a worker's notes are never silently dropped.
+  const hasNotesColumn = ((STATE.data.workOrders && STATE.data.workOrders.headers) || []).indexOf('Notes') > -1;
+  const overlay = el('<div class="modal-overlay"></div>');
+  const sheet = el('<div class="modal-sheet"></div>');
+  sheet.innerHTML =
+    '<div class="modal-head"><h2>Update Work Order</h2><button class="modal-close" id="modalClose">&times;</button></div>' +
+    '<div class="entry-detail" style="margin-bottom:14px;">' + esc(wo['Task_Description']) + '</div>' +
+    '<div class="field"><label>Status</label><select id="wo_status">' +
+      (statusOptions.length?statusOptions:['Pending','In Progress','Completed','Blocked']).map(function(o){
+        return '<option value="'+esc(o)+'"' + (o===wo['Status']?' selected':'') + '>'+esc(o)+'</option>';
+      }).join('') +
+    '</select></div>' +
+    '<div class="field"><label>Actual Hours</label><input id="wo_hours" type="number" step="0.25" min="0" value="' + esc(wo['Act_Hours']||'') + '"></div>' +
+    (hasNotesColumn ? '<div class="field"><label>Notes</label><textarea id="wo_notes" placeholder="Anything the crew or founder should know"></textarea></div>' : '') +
+    '<div class="field"><label>Photo (optional)</label><input id="wo_photo" type="file" accept="image/*" capture="environment">' +
+      '<div id="wo_photo_preview" style="margin-top:8px;"></div></div>' +
+    '<div class="modal-actions">' +
+      '<button class="btn btn-secondary" id="modalCancel">Cancel</button>' +
+      '<button class="btn btn-primary" id="modalSave">Save</button>' +
+    '</div>';
+
+  overlay.appendChild(sheet);
+  document.getElementById('app').appendChild(overlay);
+  function close(){ overlay.remove(); }
+  document.getElementById('modalClose').addEventListener('click', close);
+  document.getElementById('modalCancel').addEventListener('click', close);
+  overlay.addEventListener('click', function(e){ if(e.target===overlay) close(); });
+
+  document.getElementById('wo_photo').addEventListener('change', function(e){
+    const preview = document.getElementById('wo_photo_preview');
+    const file = e.target.files[0];
+    if(!file){ preview.innerHTML=''; return; }
+    preview.innerHTML = '<img src="' + URL.createObjectURL(file) + '" style="max-width:100%;max-height:160px;border-radius:8px;border:1.5px solid var(--line);">';
+  });
+
+  function readPhotoAsBase64(){
+    const input = document.getElementById('wo_photo');
+    const file = input && input.files[0];
+    if(!file) return Promise.resolve(null);
+    return new Promise(function(resolve){
+      const reader = new FileReader();
+      reader.onload = function(){ resolve({ base64: reader.result.split(',')[1]||'', filename: file.name, mimeType: file.type }); };
+      reader.onerror = function(){ resolve(null); };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  document.getElementById('modalSave').addEventListener('click', function(){
+    const saveBtn = document.getElementById('modalSave');
+    saveBtn.disabled = true; saveBtn.textContent = 'Saving…';
+    const fields = {
+      Status: document.getElementById('wo_status').value,
+      Act_Hours: document.getElementById('wo_hours').value
+    };
+    const notesEl = document.getElementById('wo_notes');
+    const notes = notesEl ? notesEl.value.trim() : '';
+    if(notes) fields['Notes'] = notes;
+
+    readPhotoAsBase64().then(function(photo){
+      if(photo){
+        fields['PhotoBase64'] = photo.base64;
+        fields['PhotoFilename'] = photo.filename;
+        fields['PhotoMimeType'] = photo.mimeType;
+      }
+      apiPost('updateWorkOrder', { workOrderId: wo['Work_Order_ID'], fields: fields }).then(function(res){
+        if(res.ok){
+          close();
+          showToast('Work order updated.', 'success');
+          loadData();
+        } else {
+          saveBtn.disabled = false; saveBtn.textContent = 'Save';
+          showToast(res.error || 'Could not save — try again.', 'warn');
+        }
+      }).catch(function(){
+        saveBtn.disabled = false; saveBtn.textContent = 'Save';
+        showToast('Could not reach the sheet — try again.', 'warn');
+      });
+    });
+  });
+}
+
+function liveRow(r){
+  const state = r['Current_State'] || 'Idle';
+  const pillClass = {
+    'Idle': 'st-idle', 'Present': 'st-present', 'Working': 'st-working',
+    'On Break': 'st-break', 'On Lunch': 'st-break', 'Available': 'st-available'
+  }[state] || 'st-idle';
+  let detail = '';
+  if(state === 'Working') detail = esc(r['Current_Location']||'') + (r['Active_Task'] ? ' — ' + esc(r['Active_Task']) : '') + (r['Task_Started_At'] ? ' · since ' + esc(r['Task_Started_At']) : '');
+  else if(state === 'Present') detail = esc(r['Current_Location']||'') + (r['Present_Since'] ? ' · since ' + esc(r['Present_Since']) : '');
+  else if(state === 'On Break' || state === 'On Lunch') detail = esc(r['Current_Location']||'Mobile');
+  else if(state === 'Available') detail = 'Last: ' + esc(r['Current_Location']||'');
+  return '<div class="live-row"><div><div class="lr-name">' + esc(r['Worker_Name']) + '</div>' +
+    (detail ? '<div class="lr-detail">' + detail + '</div>' : '') + '</div>' +
+    '<span class="live-pill ' + pillClass + '">' + esc(state) + '</span></div>';
+}
+
+function varianceRow(v){
+  let chip = '<span class="var-chip pending">Not yet logged</span>';
+  if(v.completed){
+    const mins = v.varianceEndMins != null ? v.varianceEndMins : v.varianceStartMins;
+    if(mins == null){
+      chip = '<span class="var-chip ontime">Logged — no scheduled time to compare</span>';
+    } else if(mins > 5){
+      chip = '<span class="var-chip late">' + mins + ' min late</span>';
+    } else if(mins < -5){
+      chip = '<span class="var-chip early">' + Math.abs(mins) + ' min early</span>';
+    } else {
+      chip = '<span class="var-chip ontime">On time</span>';
+    }
+  }
+  const scheduled = (v.scheduledStart||'—') + '–' + (v.scheduledEnd||'—');
+  const actual = v.completed ? ((v.actualStart||'—') + '–' + (v.actualEnd||'—')) : '—';
+  return '<div class="variance-row">' +
+    '<div class="variance-top"><span class="variance-task">' + esc(v.task) + '</span>' + chip + '</div>' +
+    '<div class="variance-times">' +
+      '<span>📍 ' + esc(v.locationName) + '</span>' +
+      '<span>Planned ' + esc(scheduled) + '</span>' +
+      '<span>Actual ' + esc(actual) + '</span>' +
+      (v.loggedBy ? '<span>By ' + esc(v.loggedBy) + '</span>' : '') +
+    '</div>' +
+  '</div>';
+}
+
+function alertRow(a){
+  return '<div class="alert-row" data-date="' + esc(a['Date']) + '" data-worker="' + esc(a['Worker']) + '" data-task="' + esc(a['Task']) + '">' +
+    '<div class="alert-main"><b>' + esc(a['Task']) + '</b>' +
+    '<div class="alert-meta">' + esc(a['Worker']) + ' · ' + esc(a['Location']||'') + ' · ' + esc(a['MinutesOverdue']) + ' min overdue</div>' +
+    '</div>' +
+    '<button class="ack-btn ack-alert-btn">Acknowledge</button>' +
+  '</div>';
+}
+
+/* =========================================================================
+   TEAM view — Ranch Manager / Founder only
+   ========================================================================= */
+function renderTeam(){
+  const summary = (STATE.data.summary.rows||[]).slice().sort(function(a,b){ return b['Operation_Date'].localeCompare(a['Operation_Date']); });
+  const recent = summary.slice(0,7);
+  const avgCompliance = recent.length ? Math.round(recent.reduce(function(s,r){ return s + (Number(r['Compliance_%'])||0); },0)/recent.length*100) : 0;
+  const openIssues = recent.reduce(function(s,r){ return s + (Number(r['Critical_Issues'])||0); },0);
+  const completeDays = recent.filter(function(r){ return r['All_Logs_Complete']==='Complete'; }).length;
+
+  let html = '<h2 class="section-title">Team Overview</h2>';
+
+  const alerts = ((STATE.data.alerts && STATE.data.alerts.rows) || []).filter(function(a){ return a['Acknowledged'] !== 'Yes'; });
+  if(alerts.length){
+    html += '<h3 class="block-title">Overdue Alerts</h3>';
+    alerts.slice(0,20).forEach(function(a){ html += alertRow(a); });
+  }
+
+  html += '<h3 class="block-title">Live Now</h3>';
+  const live = (STATE.data.liveStatus && STATE.data.liveStatus.rows) || [];
+  if(!live.length){
+    html += '<div class="empty-state"><span class="ic">📡</span>No crew status yet today.</div>';
+  } else {
+    live.forEach(function(r){ html += liveRow(r); });
+  }
+
+  html += '<div class="stat-row">' +
+    '<div class="stat-card"><div class="num">' + avgCompliance + '%</div><div class="lbl">7-Day Compliance</div></div>' +
+    '<div class="stat-card"><div class="num">' + completeDays + '/' + recent.length + '</div><div class="lbl">Days Complete</div></div>' +
+    '<div class="stat-card"><div class="num">' + openIssues + '</div><div class="lbl">Critical Issues</div></div>' +
+  '</div>';
+
+  html += '<h3 class="block-title" style="margin-top:6px;">Daily Summary</h3>';
+  if(!summary.length){
+    html += '<div class="empty-state"><span class="ic">📊</span>No summary rows yet — this fills in as the crew logs entries.</div>';
+  } else {
+    summary.slice(0,30).forEach(function(r){
+      const complete = r['All_Logs_Complete'];
+      const pillClass = complete === 'Complete' ? 'complete' : (complete === 'Incomplete' ? 'incomplete' : 'zero');
+      const pct = r['Compliance_%'] != null && r['Compliance_%'] !== '' ? Math.round(Number(r['Compliance_%'])*100) + '%' : '—';
+      html += '<div class="summary-row">' +
+        '<div class="summary-date"><b>' + esc(r['Operation_Date']) + '</b>' + esc(r['Season']||'') + '</div>' +
+        '<span class="pill ' + pillClass + '">' + esc(complete||'—') + '</span>' +
+        '<span class="chip time">' + pct + '</span>' +
+        (Number(r['Critical_Issues'])>0 ? '<span class="chip" style="background:#F2DFDB;color:var(--rust-dark);">' + r['Critical_Issues'] + ' issue' + (r['Critical_Issues']>1?'s':'') + '</span>' : '') +
+      '</div>';
+    });
+  }
+
+  html += '<h3 class="block-title" style="margin-top:22px;">Planned vs. Actual (Today)</h3>';
+  if(STATE.varianceLoading || !STATE.variance){
+    html += '<div class="empty-state"><span class="ic">⏱️</span>Loading schedule variance…</div>';
+  } else if(!STATE.variance.rows.length){
+    html += '<div class="empty-state"><span class="ic">🗓️</span>No scheduled tasks found for ' + esc(STATE.varianceDate) + '.</div>';
+  } else {
+    STATE.variance.rows.forEach(function(v){ html += varianceRow(v); });
+  }
+
+  html += '<h3 class="block-title" style="margin-top:22px;">Recent Entries</h3>';
+  html += '<div class="filter-row">' +
+    ['ALL','HEALTH_LOG','WATER_LOG','MOVEMENT_LOG'].map(function(f){
+      const label = f==='ALL' ? 'All' : LOG_META[f].label;
+      return '<button class="filter-chip' + (STATE.historyFilter===f?' active':'') + '" data-filter="' + f + '">' + label + '</button>';
+    }).join('') +
+  '</div>';
+
+  const entries = allLogEntries()
+    .filter(function(e){ return STATE.historyFilter==='ALL' || e._tab===STATE.historyFilter; })
+    .sort(function(a,b){ return (b['Date']+(b['Time']||'')).localeCompare(a['Date']+(a['Time']||'')); })
+    .slice(0,40);
+  if(!entries.length){
+    html += '<div class="empty-state"><span class="ic">🧾</span>No entries logged yet for this filter.</div>';
+  } else {
+    entries.forEach(function(e){ html += entryRow(e); });
+  }
+
+  renderShell(html);
+  document.querySelectorAll('.filter-chip').forEach(function(b){
+    b.addEventListener('click', function(){
+      STATE.historyFilter = b.getAttribute('data-filter');
+      render();
+    });
+  });
+  document.querySelectorAll('.ack-alert-btn').forEach(function(b){
+    b.addEventListener('click', function(){
+      const row = b.closest('.alert-row');
+      b.disabled = true; b.textContent = '…';
+      acknowledgeAlert({ Date: row.getAttribute('data-date'), Worker: row.getAttribute('data-worker'), Task: row.getAttribute('data-task') });
+    });
+  });
+}
+
+/* =========================================================================
+   Root render
+   ========================================================================= */
+function render(){
+  const app = document.getElementById('app');
+  if(!STATE.user){
+    renderLogin();
+    return;
+  }
+  if(STATE.loading){
+    renderShell('<div class="loading-state">Loading ranch data…</div>');
+    return;
+  }
+  if(STATE.loadError){
+    renderShell('<div class="empty-state"><span class="ic">⚠️</span>' + esc(STATE.loadError) +
+      '<div style="margin-top:14px;"><button class="btn btn-primary" id="retryLoad" style="width:auto;padding:10px 18px;">Retry</button></div></div>');
+    const r = document.getElementById('retryLoad');
+    if(r) r.addEventListener('click', loadData);
+    return;
+  }
+  if(STATE.view === 'today') renderToday();
+  else if(STATE.view === 'scan') renderScan();
+  else if(STATE.view === 'location') renderLocation();
+  else if(STATE.view === 'projects') renderProjects();
+  else if(STATE.view === 'mylog') renderMyLog();
+  else if(STATE.view === 'team'){
+    const todayDate = todayISO();
+    if((!STATE.variance || STATE.varianceDate !== todayDate) && !STATE.varianceLoading){
+      loadVariance(todayDate);
+      return;
+    }
+    renderTeam();
+  }
+  else renderToday();
+}
+
+boot();
+</script>
+</body>
+</html>
