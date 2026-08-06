@@ -1106,7 +1106,7 @@ function renderShell(innerHTML){
   document.getElementById('logoutBtn').addEventListener('click', function(){
     stopScanCamera();
     clearSession();
-    STATE.user = null; STATE.data = null;
+    STATE.user = null; STATE.data = null; STATE.view = 'today'; STATE.loading = true;
     render();
   });
   document.querySelectorAll('.nav-btn').forEach(function(b){
@@ -1436,7 +1436,7 @@ function renderProjects(){
   let html = '<h2 class="section-title">' + (isManager ? 'Directives & Projects' : 'My Work Orders') + '</h2>';
 
   if(isManager){
-    const directives = (STATE.data.directives && STATE.data.directives.rows) || [];
+    const directives = (STATE.data && STATE.data.directives && STATE.data.directives.rows) || [];
     if(!directives.length){
       html += '<div class="empty-state"><span class="ic">🧭</span>No founder directives on file yet.</div>';
     } else {
@@ -1444,7 +1444,7 @@ function renderProjects(){
       directives.forEach(function(d){ html += directiveCard(d); });
     }
 
-    const projects = (STATE.data.projects && STATE.data.projects.rows || []).filter(function(p){ return p['Project_ID']; });
+    const projects = ((STATE.data && STATE.data.projects && STATE.data.projects.rows) || []).filter(function(p){ return p['Project_ID']; });
     html += '<h3 class="block-title" style="margin-top:20px;">Projects</h3>';
     if(!projects.length){
       html += '<div class="empty-state"><span class="ic">🏗️</span>No projects on file yet.</div>';
@@ -1814,6 +1814,13 @@ function render(){
       '<div style="margin-top:14px;"><button class="btn btn-primary" id="retryLoad" style="width:auto;padding:10px 18px;">Retry</button></div></div>');
     const r = document.getElementById('retryLoad');
     if(r) r.addEventListener('click', loadData);
+    return;
+  }
+  if(!STATE.data){
+    // Data hasn't loaded yet (e.g. a fresh login re-used a STATE.view left
+    // over from before a logout, before loadData() has had a chance to run).
+    // Kick off a load instead of letting a view render against null data.
+    loadData();
     return;
   }
   if(STATE.view === 'today') renderToday();
